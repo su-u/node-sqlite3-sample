@@ -26,15 +26,15 @@ export class User {
   }
 }
 
-const userTableName = 'users';
-
-export default class UserTable {
-  static async createTableIfNotExists() {
+export default class Table {
+  private static _tabelName: string;
+  static async createTableIfNotExists(tabelName: string) {
+    Table._tabelName = tabelName;
     const db = DBCommon.get();
     return new Promise((resolve, reject) => {
       try {
         db.serialize(() => {
-          db.run(`create table if not exists ${userTableName} (
+          db.run(`create table if not exists ${tabelName} (
             account text primary key,
             name text,
             email text
@@ -52,7 +52,7 @@ export default class UserTable {
     return new Promise((resolve, reject) => {
       try {
         db.run(
-          `insert or replace into ${userTableName} 
+          `insert or replace into ${Table._tabelName} 
         (account, name, email) 
         values ($account, $name, $email)`,
           user.account,
@@ -69,20 +69,20 @@ export default class UserTable {
   static async count() {
     const db = DBCommon.get();
     return new Promise((resolve, reject) => {
-      db.get(`select count(*) from ${userTableName}`, (err: any, row: any) => {
+      db.get(`select count(*) from ${Table._tabelName}`, (err: any, row: any) => {
         if (err) return reject(err);
         return resolve(row['count(*)']);
       });
     });
   }
 
-  static async list(offset: any, limit: any) {
+  static async list(offset: number, limit: number) {
     const db = DBCommon.get();
     const result: any[] = [];
     return new Promise((resolve, reject) => {
       db.serialize(() => {
         db.all(
-          `select account, name, email from ${userTableName}
+          `select account, name, email from ${Table._tabelName}
         order by account limit ${limit} offset ${offset}`,
           (err: any, rows: any) => {
             if (err) return reject(err);
@@ -101,7 +101,7 @@ export default class UserTable {
     return new Promise((resolve, reject) => {
       try {
         db.run(
-          `delete from ${userTableName} where account = $account`,
+          `delete from ${Table._tabelName} where account = $account`,
           user.account
         );
         return resolve();
